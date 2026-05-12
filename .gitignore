@@ -1,0 +1,73 @@
+# .gitignore for Coding Test Study (C++, Java, Python)
+
+# [ OS Generated Files ]
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# [ IDEs and Editors ]
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.hermes/
+
+# [ C++ ]
+*.o
+*.obj
+*.out
+*.exe
+*.dSYM/
+sol_bin
+
+# [ Java ]
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# [ Python ]
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# [ UNIX Executables (Files without extensions) ]
+# Matches files in any subdirectory that do not contain a dot in their name.
+# This prevents compiled C++ binaries (e.g., '1940', 'sol') from being committed.
+**/[a-zA-Z0-9_]*
+!**/[a-zA-Z0-9_]*.*
+!**/[a-zA-Z0-9_]*/
+
+# [ Exceptions ]
+# Add any files without extensions that SHOULD be committed here
+!.gitignore
+!LICENSE
+!README
+!Makefile

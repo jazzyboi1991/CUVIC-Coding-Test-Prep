@@ -3,6 +3,9 @@ import os
 import re
 import subprocess
 import time
+import urllib.request
+import urllib.error
+import html
 
 def print_result(case_num, status, exec_time, memory, expected, actual):
     color = "\033[92m" if status == "PASS" else "\033[91m"
@@ -33,6 +36,47 @@ def parse_md(md_path):
         
     return time_limit, mem_limit, test_cases
 
+def fetch_boj_data(prob_id):
+    url = f"https://www.acmicpc.net/problem/{prob_id}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            content = response.read().decode('utf-8')
+            
+        # 시간 제한 추출
+        # <table id="problem-info"> ... <td>1 초</td>
+        time_limit_match = re.search(r'시간 제한[\s\S]*?<td>([\d.]+)\s*초', content)
+        time_limit = float(time_limit_match.group(1)) if time_limit_match else 2.0
+        
+        # 메모리 제한 추출
+        mem_limit_match = re.search(r'메모리 제한[\s\S]*?<td>(\d+)\s*MB', content)
+        mem_limit = int(mem_limit_match.group(1)) if mem_limit_match else 128
+        
+        # 예제 입력/출력 추출
+        # <pre id="sample-input-1" ...>...</pre>
+        inputs = re.findall(r'<pre[^>]*id="sample-input-\d+"[^>]*>([\s\S]*?)</pre>', content)
+        outputs = re.findall(r'<pre[^>]*id="sample-output-\d+"[^>]*>([\s\S]*?)</pre>', content)
+        
+        test_cases = []
+        for i, o in zip(inputs, outputs):
+            # HTML 엔티티 변환 (&lt; -> < 등) 및 공백 정리
+            clean_i = html.unescape(i).strip().replace('\r\n', '\n')
+            clean_o = html.unescape(o).strip().replace('\r\n', '\n')
+            test_cases.append((clean_i, clean_o))
+            
+        return time_limit, mem_limit, test_cases
+        
+    except urllib.error.HTTPError as e:
+        print(f"Error fetching from BOJ: HTTP {e.code}")
+    except Exception as e:
+        print(f"Error fetching from BOJ: {str(e)}")
+        
+    return None, None, []
+
 def run_judge(source_path):
     if not os.path.exists(source_path):
         print(f"Error: File not found: {source_path}")
@@ -42,34 +86,24 @@ def run_judge(source_path):
     source_dir = os.path.dirname(os.path.abspath(source_path))
     parent_dir = os.path.dirname(source_dir)
     filename = os.path.basename(source_path)
-    prob_id = re.match(r'^(\d+)', filename).group(1)
+    prob_id_match = re.search(r'(\d+)', filename)
+    if not prob_id_match:
+        print(f"Error: Could not find problem ID in filename: {filename}")
+        return
+    prob_id = prob_id_match.group(1)
     
     import unicodedata
     def normalize(text):
         return unicodedata.normalize('NFC', text)
 
-    md_file = None
-    prob_id = normalize(prob_id)
+    print(f"Fetching problem data from Baekjoon for ID {prob_id}...")
+    t_limit, m_limit, tests = fetch_boj_data(prob_id)
     
-    for f in os.listdir(parent_dir):
-        norm_f = normalize(f)
-        if norm_f.startswith(prob_id) and norm_f.endswith("_문제.md"):
-            md_file = os.path.join(parent_dir, f)
-            break
-    
-    if not md_file:
-        for f in os.listdir(source_dir):
-            norm_f = normalize(f)
-            if norm_f.startswith(prob_id) and norm_f.endswith("_문제.md"):
-                md_file = os.path.join(source_dir, f)
-                break
-
-    if not md_file:
-        print(f"Error: Problem MD file for ID {prob_id} not found in {parent_dir} or {source_dir}")
+    if not tests:
+        print(f"Error: Could not fetch data for problem {prob_id} from Baekjoon.")
         return
-
-    print(f"Found Problem: {os.path.basename(md_file)}")
-    t_limit, m_limit, tests = parse_md(md_file)
+    
+    print(f"Successfully fetched problem data from Baekjoon.")
     print(f"Constraints: Time {t_limit}s, Memory {m_limit}MB")
     print("-" * 50)
 
@@ -94,8 +128,19 @@ def run_judge(source_path):
         if subprocess.run(["javac", source_path]).returncode != 0:
             print("Compilation Failed")
             return
+        
         class_name = os.path.splitext(filename)[0]
-        cmd = ["java", "-cp", source_dir, class_name]
+        full_class_name = class_name
+        
+        # 패키지 선언 감지
+        with open(source_path, 'r', encoding='utf-8') as f:
+            java_content = f.read()
+            pkg_match = re.search(r'package\s+([\w.]+);', java_content)
+            if pkg_match:
+                full_class_name = f"{pkg_match.group(1)}.{class_name}"
+        
+        # 현재 작업 디렉토리를 클래스패스에 추가
+        cmd = ["java", "-cp", f".{os.pathsep}{source_dir}", full_class_name]
         cleanup.append(os.path.join(source_dir, f"{class_name}.class"))
     else:
         print(f"Unsupported extension: {ext}")
