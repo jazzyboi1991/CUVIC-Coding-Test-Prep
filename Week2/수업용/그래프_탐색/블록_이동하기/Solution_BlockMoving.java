@@ -1,3 +1,5 @@
+package Week2.수업용.그래프_탐색.블록_이동하기;
+
 import java.util.ArrayList; // 가변적인 리스트(목록)를 만들기 위한 도구입니다.
 import java.util.Arrays; // 배열을 편리하게 다루기 위한 기능들이 들어있습니다.
 import java.util.HashSet; // 중복을 허용하지 않는 데이터 보관함(Set)입니다.
@@ -21,13 +23,13 @@ class Node {
     }
 }
 
-public class Solution {
+public class Solution_BlockMoving {
     // 문제를 푸는 주 기능이 담긴 함수입니다.
     // board: 게임판의 정보를 담은 2차원 배열 (0은 빈칸, 1은 벽)
     public int solution(int[][] board) {
         int n = board.length; // 지도의 한 변의 길이를 알아냅니다.
         // 지도의 가장자리를 벽(1)으로 감싸기 위해 크기를 2씩 늘린 새 지도를 준비합니다.
-        int[][] newBoard = new int[n + 2][n + 2]; 
+        int[][] newBoard = new int[n + 2][n + 2];
         for (int i = 0; i < n + 2; i++) // 새 지도의 모든 행을 확인하며
             Arrays.fill(newBoard[i], 1); // 일단 전부 벽(1)으로 가득 채웁니다.
         for (int i = 0; i < n; i++) // 원래 지도의 크기만큼 반복하여
@@ -62,7 +64,7 @@ public class Solution {
     // board: 벽 정보가 담긴 지도 데이터
     private List<Node> getNext(Node curr, int[][] board) {
         List<Node> next = new ArrayList<>(); // 다음 위치들을 담을 바구니를 준비합니다.
-        
+
         // 1. 상하좌우 이동을 확인합니다.
         int[] dr = { -1, 1, 0, 0 }, dc = { 0, 0, -1, 1 }; // 이동할 방향 (위, 아래, 왼쪽, 오른쪽)
         for (int i = 0; i < 4; i++) { // 4개 방향에 대하여
@@ -102,7 +104,7 @@ public class Solution {
         if (r1 > r2 || (r1 == r2 && c1 > c2)) {
             int tr = r1, tc = c1; // 임시 저장소에 첫 번째 칸 정보를 보관하고
             r1 = r2; // 두 번째 칸 정보를 첫 번째로 옮깁니다.
-            c1 = c2; 
+            c1 = c2;
             r2 = tr; // 보관했던 정보를 두 번째로 옮겨 서로 바꿉니다.
             c2 = tc;
         }
@@ -112,7 +114,7 @@ public class Solution {
     // 프로그램이 시작되는 곳입니다.
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in); // 키보드 입력을 받기 위한 도구입니다.
-        Solution sol = new Solution(); // 정답을 구하는 도구(객체)를 만듭니다.
+        Solution_BlockMoving sol = new Solution_BlockMoving(); // 정답을 구하는 도구(객체)를 만듭니다.
 
         System.out.print("지도의 크기(n)를 입력하세요: "); // 안내 문구를 출력합니다.
         int n = sc.nextInt(); // 지도의 크기를 숫자로 입력받습니다.
